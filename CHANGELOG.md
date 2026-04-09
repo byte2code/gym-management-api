@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented in this file.
 
+## [v3.0.0] - 2026-04-10
+
+### Summary
+Third version of the Gym Management API that upgrades authentication from form login to JWT-based stateless security.
+
+### Highlights
+
+- Added `POST /auth/login` for token-based authentication.
+- Added `AuthController` and `AuthService` for authentication and JWT issuance.
+- Added `JwtAuthenticationFilter` to authenticate requests from bearer tokens.
+- Added `JwtAuthenticationHelper` plus request and response DTOs for token handling.
+- Refreshed the README to present the project as a stronger JWT security learning showcase.
+
+### Notes
+
+This version improves the project’s learning value by introducing stateless authentication while keeping the existing role-based gym workflows intact.
+
 ## [v2.0.0] - 2026-04-10
 
 ### Summary

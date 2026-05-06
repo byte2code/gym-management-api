@@ -1,53 +1,11 @@
 # Changelog
 
-All notable changes to this project are documented in this file.
+## v2.0.0 - 2026-05-06
 
-## [v3.0.0] - 2026-04-10
+- Updated the Gym Management API snapshot with the security/JWT template
+- Added refreshed authentication and workout management flow
+- Published the version to the existing repository
 
-### Summary
-Third version of the Gym Management API that upgrades authentication from form login to JWT-based stateless security.
+## v1.0.0 - 2026-05-04
 
-### Highlights
-
-- Added `POST /auth/login` for token-based authentication.
-- Added `AuthController` and `AuthService` for authentication and JWT issuance.
-- Added `JwtAuthenticationFilter` to authenticate requests from bearer tokens.
-- Added `JwtAuthenticationHelper` plus request and response DTOs for token handling.
-- Refreshed the README to present the project as a stronger JWT security learning showcase.
-
-### Notes
-
-This version improves the project’s learning value by introducing stateless authentication while keeping the existing role-based gym workflows intact.
-
-## [v2.0.0] - 2026-04-10
-
-### Summary
-Second version of the Gym Management API that adds a custom form-login experience and remember-me authentication support.
-
-### Highlights
-
-- Added a dedicated `LoginController` with a custom `/login` page.
-- Added Thymeleaf-based `login.html` for browser login flow.
-- Replaced HTTP Basic security with form login.
-- Added remember-me support backed by the custom `UserDetailsService`.
-- Refreshed the README to present the project as a stronger security and web-integration learning showcase.
-
-### Notes
-
-This version improves the project’s learning value by combining secured REST workflows with a simple custom authentication UI.
-
-## [v1.0.0] - 2026-04-09
-
-### Summary
-Initial publication of the Gym Management API as a clean, portfolio-ready Spring Boot REST project.
-
-### Highlights
-
-- Added a recruiter-friendly README with API overview, features, run steps, security notes, and project structure.
-- Added a changelog for clear future version tracking.
-- Cleaned IDE files, build artifacts, and template helper files before publishing.
-- Preserved the original gym, user, membership, and workout management workflows.
-
-### Notes
-
-This version establishes the project as a compact learning showcase for multi-role secured REST APIs built with Spring Boot, JPA, and MySQL.
+- Initial publication of the Gym Management API

@@ -7,25 +7,26 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+
 @Entity
-@Table(name = "gym")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "gym")
 public class Gym {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String name;
     private String address;
     private Long contactNo;
     private String membershipPlans;
     private String facilities;
 
-    @OneToMany(mappedBy = "gym", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "gym", cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<User> members = new ArrayList<>();
 

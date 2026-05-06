@@ -3,6 +3,8 @@ package com.CN.Gym.service;
 import com.CN.Gym.dto.JwtRequest;
 import com.CN.Gym.dto.JwtResponse;
 import com.CN.Gym.jwt.JwtAuthenticationHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -14,27 +16,38 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     @Autowired
-    private JwtAuthenticationHelper jwtHelper;
+    AuthenticationManager manager;
 
     @Autowired
-    private UserDetailsService userDetailsService;
+    JwtAuthenticationHelper jwtHelper;
+
+    @Autowired
+    UserDetailsService userDetailsService;
 
     public JwtResponse login(JwtRequest jwtRequest) {
-        authenticate(jwtRequest.getUsername(), jwtRequest.getPassword());
-        UserDetails userDetails = userDetailsService.loadUserByUsername(jwtRequest.getUsername());
-        String token = jwtHelper.generateToken(userDetails);
-        return JwtResponse.builder().jwtToken(token).build();
+	// authenticate with Authentication manager
+	this.doAuthenticate(jwtRequest.getUsername(), jwtRequest.getPassword());
+
+	UserDetails userDetails = userDetailsService.loadUserByUsername(jwtRequest.getUsername());
+	String token = jwtHelper.generateToken(userDetails);
+
+	JwtResponse response = JwtResponse.builder().jwtToken(token).build();
+	return response;
     }
 
-    private void authenticate(String username, String password) {
-        try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-        } catch (BadCredentialsException e) {
-            throw new BadCredentialsException("Invalid username or password");
-        }
+    private void doAuthenticate(String username, String password) {
+	UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username,
+		password);
+	try {
+	    manager.authenticate(authenticationToken);
+
+	} catch (BadCredentialsException e) {
+	    // Task 1: Create ERROR log when authentication fails
+	    logger.error("Invalid Credentials");
+	    throw new BadCredentialsException("Invalid Username or Password");
+	}
     }
 }

@@ -8,111 +8,105 @@ import com.CN.Gym.model.User;
 import com.CN.Gym.model.Workout;
 import com.CN.Gym.repository.UserRepository;
 import com.CN.Gym.repository.WorkoutRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.hibernate.Hibernate;
 
 @Service
 public class UserService {
+
+    Logger logger = LoggerFactory.getLogger(UserService.class);
 
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
     private WorkoutRepository workoutRepository;
 
     public List<User> getAllUsers() {
-        return userRepository.findAll();
+	return userRepository.findAll();
     }
 
-    // Changed return type to User
-    public User createUser(UserRequest userRequest) {
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        String encodedPassword = encoder.encode(userRequest.getPassword());
+    public void createUser(UserRequest userRequest) {
+	BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+	String encodedPassword = encoder.encode(userRequest.getPassword());
+	User user = User.builder().email(userRequest.getEmail()).age(userRequest.getAge())
+		.gender(userRequest.getGender()).password(encodedPassword).build();
+	Role role = new Role();
+	Set<Role> roles = new HashSet<>();
 
-        User user = User.builder()
-                .email(userRequest.getEmail())
-                .age(userRequest.getAge())
-                .gender(userRequest.getGender())
-                .password(encodedPassword)
-                .build();
+	if (userRequest.getUserType() != null) {
+	    if (userRequest.getUserType().equalsIgnoreCase("TRAINER")) {
+		role.setRoleName("ROLE_TRAINER");
+		roles.add(role);
+		user.setRoles(roles);
+	    } else if (userRequest.getUserType().equalsIgnoreCase("ADMIN")) {
+		role.setRoleName("ROLE_ADMIN");
+		roles.add(role);
+		user.setRoles(roles);
+	    } else {
+		role.setRoleName("ROLE_CUSTOMER");
+		roles.add(role);
+		user.setRoles(roles);
+	    }
+	} else {
+	    // Task 2: INFO log when userType is null
+	    logger.info("No userType given, setting the usertype to CUSTOMER");
+	    role.setRoleName("ROLE_CUSTOMER");
+	    roles.add(role);
+	    user.setRoles(roles);
+	}
 
-        Role role = new Role();
-        Set<Role> roles = new HashSet<>();
+	// Task 3: INFO log before saving user
+	logger.info("Saving user {} with role {}", user.getEmail(), user.getRoles());
 
-        if (userRequest.getUserType() != null) {
-            if (userRequest.getUserType().equalsIgnoreCase("TRAINER")) {
-                role.setRoleName("ROLE_TRAINER");
-            } else if (userRequest.getUserType().equalsIgnoreCase("ADMIN")) {
-                role.setRoleName("ROLE_ADMIN");
-            } else {
-                role.setRoleName("ROLE_CUSTOMER");
-            }
-        } else {
-            role.setRoleName("ROLE_CUSTOMER");
-        }
-
-        roles.add(role);
-        user.setRoles(roles);
-
-        // Return saved user
-        return userRepository.save(user);
+	userRepository.save(user);
     }
 
     public User getUserById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() ->
-                        new UserNotFoundException("User not found with ID: " + id));
+	return userRepository.findById(id)
+		.orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
     }
 
-    // Changed return type to User
-    public User updateUser(UserRequest userRequest, Long id) {
-        User existingUser = getUserById(id);
-        existingUser.setEmail(userRequest.getEmail());
-        existingUser.setAge(userRequest.getAge());
-        existingUser.setGender(userRequest.getGender());
-
-        if (userRequest.getPassword() != null && !userRequest.getPassword().isBlank()) {
-            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-            existingUser.setPassword(encoder.encode(userRequest.getPassword()));
-        }
-
-        // Return saved user
-        return userRepository.save(existingUser);
+    public void updateUser(UserRequest userRequest, Long id) {
+	User existingUser = getUserById(id);
+	existingUser.setEmail(userRequest.getEmail());
+	existingUser.setPassword(new BCryptPasswordEncoder().encode(userRequest.getPassword()));
+	existingUser.setAge(userRequest.getAge());
+	existingUser.setGender(userRequest.getGender());
+	userRepository.save(existingUser);
     }
 
     public void deleteUser(Long id) {
-        User user = getUserById(id);
-        userRepository.delete(user);
+	userRepository.deleteById(id);
     }
 
-    // Also updated to return Workout to match controller
-    @Transactional
-    public Workout addWorkout(WorkoutDto workoutDto, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-
-        Workout workout = new Workout();
-        workout.setWorkoutName(workoutDto.getWorkoutName());
-        workout.setDescription(workoutDto.getDescription());
-        workout.setDifficultyLevel(workoutDto.getDifficultyLevel());
-        workout.setDuration(workoutDto.getDuration());
-        workout.setUser(user);
-
-        Workout saved = workoutRepository.save(workout);
-
-        // Force initialize so tests can see the workouts list
-        Hibernate.initialize(user.getWorkouts());
-
-        return saved;
+    public void addWorkout(WorkoutDto workoutDto, Long userId) {
+	User user = getUserById(userId);
+	Workout workout = Workout.builder().workoutName(workoutDto.getWorkoutName()).duration(workoutDto.getDuration())
+		.description(workoutDto.getDescription()).difficultyLevel(workoutDto.getDifficultyLevel()).user(user)
+		.build();
+	List<Workout> workouts = user.getWorkouts();
+	workouts.add(workout);
+	user.setWorkouts(workouts);
+	userRepository.save(user);
     }
 
-
-
+    public void assignRole(Long userId, String role) {
+	User user = getUserById(userId);
+	Role myRole = new Role();
+	myRole.setRoleName(role);
+	user.getRoles().add(myRole);
+	userRepository.save(user);
+    }
 }

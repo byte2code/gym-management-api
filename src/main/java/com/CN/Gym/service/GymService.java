@@ -2,7 +2,6 @@ package com.CN.Gym.service;
 
 import com.CN.Gym.dto.GymDto;
 import com.CN.Gym.exception.GymNotFoundException;
-import com.CN.Gym.exception.UserNotFoundException;
 import com.CN.Gym.model.Gym;
 import com.CN.Gym.model.User;
 import com.CN.Gym.repository.GymRepository;
@@ -11,9 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
-import org.springframework.transaction.annotation.Transactional;
-import org.hibernate.Hibernate;
+import java.util.Objects;
 
 @Service
 public class GymService {
@@ -24,79 +21,58 @@ public class GymService {
     @Autowired
     private UserRepository userRepository;
 
-    // 1. Get all gyms
+    @Autowired
+    private UserService userService;
+
     public List<Gym> getAllGyms() {
-	return gymRepository.findAll();
+        return gymRepository.findAll();
     }
 
-    // 2. Get gym by ID
     public Gym getGymById(Long id) {
-	return gymRepository.findById(id).orElseThrow(() -> new GymNotFoundException("Gym not found with ID: " + id));
+        return gymRepository.findById(id).orElseThrow(() -> new GymNotFoundException("Gym not found with id: " + id));
     }
 
-    // 3. Delete gym by ID
     public void deleteGymById(Long id) {
-	Gym gym = getGymById(id);
-	gymRepository.delete(gym);
+        gymRepository.deleteById(id);
     }
 
-    // 4. Update gym
-    public Gym updateGym(GymDto gymDto, Long id) {
-	Gym gym = getGymById(id);
-	gym.setName(gymDto.getName());
-	gym.setAddress(gymDto.getAddress());
-	gym.setContactNo(gymDto.getContactNo());
-	gym.setMembershipPlans(gymDto.getMembershipPlans());
-	gym.setFacilities(gymDto.getFacilities());
-	return gymRepository.save(gym);
+    public void updateGym(GymDto gymDto, Long id) {
+        Gym existingGym = getGymById(id);
+        existingGym.setAddress(gymDto.getAddress());
+        existingGym.setFacilities(gymDto.getFacilities());
+        existingGym.setName(gymDto.getName());
+        existingGym.setMembers(gymDto.getMembers());
+        existingGym.setContactNo(gymDto.getContactNo());
+        existingGym.setMembershipPlans(gymDto.getMembershipPlans());
+        gymRepository.save(existingGym);
     }
 
-    // 5. Create new gym
-    public Gym createGym(GymDto gymDto) {
-	Gym gym = new Gym();
-	gym.setName(gymDto.getName());
-	gym.setAddress(gymDto.getAddress());
-	gym.setContactNo(gymDto.getContactNo());
-	gym.setMembershipPlans(gymDto.getMembershipPlans());
-	gym.setFacilities(gymDto.getFacilities());
-	return gymRepository.save(gym);
+    public void createGym(GymDto gymDto) {
+        Gym gym = Gym.builder().name(gymDto.getName()).membershipPlans(gymDto.getMembershipPlans())
+                .address(gymDto.getAddress()).facilities(gymDto.getFacilities())
+                .contactNo(gymDto.getContactNo()).members(gymDto.getMembers()).build();
+        gymRepository.save(gym);
     }
 
-
-
-    @Transactional
     public void addMember(Long userId, Long gymId) {
-        Gym gym = gymRepository.findById(gymId)
-                .orElseThrow(() -> new GymNotFoundException("Gym not found"));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-
+        User user = userService.getUserById(userId);
+        Gym gym = getGymById(gymId);
+        List<User> members= gym.getMembers();
+        members.add(user);
+        gym.setMembers(members);
         user.setGym(gym);
-        gym.getMembers().add(user);
+        gymRepository.save(gym);
         userRepository.save(user);
-
-        // Force initialization so tests can inspect members after method returns
-        Hibernate.initialize(gym.getMembers());
     }
 
-
-
-
-    @Transactional
     public void deleteMember(Long userId, Long gymId) {
-        Gym gym = gymRepository.findById(gymId)
-                .orElseThrow(() -> new GymNotFoundException("Gym not found"));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-
-        gym.getMembers().remove(user);
-        user.setGym(null);
-        userRepository.save(user);
-
-        Hibernate.initialize(gym.getMembers());
+        User user = userService.getUserById(userId);
+        Gym gym = getGymById(gymId);
+        if (gym.getMembers().contains(user)) {
+            user.setGym(null);
+            gym.getMembers().remove(user);
+            gymRepository.save(gym);
+            userRepository.save(user);
+        }
     }
-
-
-
-
 }

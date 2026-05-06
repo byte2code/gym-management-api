@@ -3,14 +3,11 @@ package com.CN.Gym.controller;
 import com.CN.Gym.dto.GymDto;
 import com.CN.Gym.model.Gym;
 import com.CN.Gym.service.GymService;
-import com.CN.Gym.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.websocket.server.PathParam;
 import java.util.List;
 
 @RestController
@@ -20,56 +17,54 @@ public class GymController {
     @Autowired
     private GymService gymService;
 
-    @Autowired
-    private UserService userService;
-
+    // 1. ADMIN - Get all gyms
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all")
-    @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasRole('ADMIN')")
     public List<Gym> getAllGyms() {
-        return gymService.getAllGyms();
+	return gymService.getAllGyms();
     }
 
-    @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
+    // 2. ADMIN - Get gym by ID
     @PreAuthorize("hasRole('ADMIN')")
-    public Gym getGymById(@PathVariable Long id){
-        return gymService.getGymById(id);
+    @GetMapping("/{id}")
+    public Gym getGymById(@PathVariable Long id) {
+	return gymService.getGymById(id);
     }
 
+    // 3. ADMIN - Create new gym
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('ADMIN')")
-    public void createGym(@RequestBody GymDto gymDto) {
-        gymService.createGym(gymDto);
+    public Gym createGym(@RequestBody GymDto gymDto) {
+	return gymService.createGym(gymDto);
     }
 
+    // 4. ADMIN - Update gym by ID
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasRole('ADMIN')")
-    public void updateGym(@RequestBody GymDto gymDto, @PathVariable Long id){
-        gymService.updateGym(gymDto, id);
+    public Gym updateGym(@PathVariable Long id, @RequestBody GymDto gymDto) {
+	return gymService.updateGym(gymDto,id);
     }
 
+    // 5. ADMIN - Delete gym by ID
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasRole('ADMIN')")
-    public void deleteGym(@PathVariable Long id){
-        gymService.deleteGymById(id);
+    public void deleteGym(@PathVariable Long id) {
+	gymService.deleteGymById(id);
     }
 
+    // 6. ADMIN - Add member to a gym
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/addMember")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('ADMIN')")
-    public void addMember(@PathParam("userId") Long userId, @PathParam("gymId") Long gymId) {
-        gymService.addMember(userId, gymId);
+    public void addMember(@RequestParam Long userId, @RequestParam Long gymId) {
+	gymService.addMember(userId, gymId);
     }
 
+    // 7. ADMIN - Remove member from a gym
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/deleteMember")
-    @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasRole('ADMIN')")
-    public void deleteMember(@PathParam("userId") Long userId, @PathParam("gymId") Long gymId) {
-        gymService.deleteMember(userId, gymId);
+    public void deleteMember(@RequestParam Long userId, @RequestParam Long gymId) {
+	gymService.deleteMember(userId, gymId);
     }
-
 }

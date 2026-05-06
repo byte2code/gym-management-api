@@ -3,6 +3,7 @@ package com.CN.Gym.controller;
 import com.CN.Gym.dto.UserRequest;
 import com.CN.Gym.dto.WorkoutDto;
 import com.CN.Gym.model.User;
+import com.CN.Gym.model.Workout;
 import com.CN.Gym.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -12,52 +13,52 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/user/")
+@RequestMapping("/user")
 public class UserController {
 
     @Autowired
     private UserService userService;
 
-    @GetMapping("/all")
-    @ResponseStatus(HttpStatus.OK)
+    // 1. ADMIN - Get all users
     @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/all")
     public List<User> getAllUsers() {
         return userService.getAllUsers();
     }
 
+    // 2. PUBLIC - Register a new user
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public void registerUser(@RequestBody UserRequest userRequest) {
-        userService.createUser(userRequest);
+    public User registerUser(@RequestBody UserRequest userRequest) {
+        return userService.createUser(userRequest); // ✅ matches service
     }
 
+    // 3. CUSTOMER - Get user by ID
+    @PreAuthorize("hasRole('CUSTOMER')")
     @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasRole('ADMIN')")
-    public User getUserById(@PathVariable Long id){
+    public User getUserById(@PathVariable Long id) {
         return userService.getUserById(id);
     }
 
+    // 4. CUSTOMER - Update user by ID
+    @PreAuthorize("hasRole('CUSTOMER')")
     @PutMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("hasRole('ADMIN')")
-    public void updateUser(@RequestBody UserRequest userRequest, @PathVariable Long id){
-        userService.updateUser(userRequest, id);
+    public User updateUser(@PathVariable Long id, @RequestBody UserRequest userRequest) {
+        return userService.updateUser(userRequest, id); // ✅ fixed order
     }
 
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
+    // 5. ADMIN - Delete user by ID
     @PreAuthorize("hasRole('ADMIN')")
-    public void deleteUser(@PathVariable Long id){
+    @DeleteMapping("/{id}")
+    public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
     }
 
-    // give Workout to a user
+    // 6. TRAINER - Assign workout to user
+    @PreAuthorize("hasRole('TRAINER')")
     @PostMapping("/workout/{userId}")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('TRAINER')")
-    public void addWorkout(@RequestBody WorkoutDto workoutDto, @PathVariable Long userId) {
-        userService.addWorkout(workoutDto, userId);
+    public Workout addWorkout(@RequestBody WorkoutDto workoutDto, @PathVariable Long userId) {
+        return userService.addWorkout(workoutDto, userId); // ✅ matches service
     }
-
 }

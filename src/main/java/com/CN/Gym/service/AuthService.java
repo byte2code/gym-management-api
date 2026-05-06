@@ -3,8 +3,6 @@ package com.CN.Gym.service;
 import com.CN.Gym.dto.JwtRequest;
 import com.CN.Gym.dto.JwtResponse;
 import com.CN.Gym.jwt.JwtAuthenticationHelper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -16,38 +14,27 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService {
 
-    Logger logger = LoggerFactory.getLogger(AuthService.class);
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     @Autowired
-    AuthenticationManager manager;
+    private JwtAuthenticationHelper jwtHelper;
 
     @Autowired
-    JwtAuthenticationHelper jwtHelper;
-
-    @Autowired
-    UserDetailsService userDetailsService;
+    private UserDetailsService userDetailsService;
 
     public JwtResponse login(JwtRequest jwtRequest) {
-	// authenticate with Authentication manager
-	this.doAuthenticate(jwtRequest.getUsername(), jwtRequest.getPassword());
-
-	UserDetails userDetails = userDetailsService.loadUserByUsername(jwtRequest.getUsername());
-	String token = jwtHelper.generateToken(userDetails);
-
-	JwtResponse response = JwtResponse.builder().jwtToken(token).build();
-	return response;
+        authenticate(jwtRequest.getUsername(), jwtRequest.getPassword());
+        UserDetails userDetails = userDetailsService.loadUserByUsername(jwtRequest.getUsername());
+        String token = jwtHelper.generateToken(userDetails);
+        return JwtResponse.builder().jwtToken(token).build();
     }
 
-    private void doAuthenticate(String username, String password) {
-	UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username,
-		password);
-	try {
-	    manager.authenticate(authenticationToken);
-
-	} catch (BadCredentialsException e) {
-	    // Task 1: Create ERROR log when authentication fails
-	    logger.error("Invalid Credentials");
-	    throw new BadCredentialsException("Invalid Username or Password");
-	}
+    private void authenticate(String username, String password) {
+        try {
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException("Invalid username or password");
+        }
     }
 }

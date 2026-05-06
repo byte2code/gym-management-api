@@ -12,25 +12,25 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Entity
+@Table(name = "users")
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "user")
+@Builder
 public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String email;
     private String password;
     private int age;
     private String gender;
 
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "role", referencedColumnName = "id"))
+    @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "role", referencedColumnName = "id"))
     private Set<Role> roles = new HashSet<>();
 
     @ManyToOne
@@ -44,32 +44,32 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return this.roles.stream().map(role -> new SimpleGrantedAuthority(role.getRoleName()))
-                .collect(Collectors.toList());
+	return this.roles.stream().map(role -> new SimpleGrantedAuthority(role.getRoleName()))
+		.collect(Collectors.toList());
     }
 
     @Override
     public String getUsername() {
-        return email;
+	return email; // Using email as username
     }
 
     @Override
     public boolean isAccountNonExpired() {
-        return true;
+	return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+	return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true;
+	return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return true;
+	return true;
     }
 }
